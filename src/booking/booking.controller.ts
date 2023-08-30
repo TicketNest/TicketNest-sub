@@ -27,7 +27,7 @@ export class BookingProcessor {
   @Process('createBooking')
   async createBooking(job: Job<unknown>) {
     const bookingData = job.data;
-    console.log('booking_controller:bookingData:', bookingData);
+    // console.log('booking_controller:bookingData:', bookingData);
     const createBooking = await this.bookingService.createBooking(bookingData);
     // if (createBooking === true) job.finished();
   }

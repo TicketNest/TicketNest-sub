@@ -19,12 +19,12 @@ const configService = new ConfigService();
     }),
     TypeOrmModule.forRoot(dataSourceOptions),
     BookingModule,
-    BullModule.forRoot({
-      redis: {
-        host: configService.get<string>('REDIS_HOST'),
-        port: configService.get<number>('REDIS_PORT'),
-        password: configService.get<string>('REDIS_PASSWORD'),
-      },
+    BullModule.forRootAsync({
+      imports: [RedisModule], // add RedisModule here
+      inject: ['REDIS_CLIENT'], // inject REDIS_CLIENT provider
+      useFactory: (redisClient: any) => ({
+        redis: redisClient,
+      }),
     }),
     RedisModule,
   ],

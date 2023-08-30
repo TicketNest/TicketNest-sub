@@ -18,7 +18,6 @@ export class BookingGateway {
   server: Server;
 
   passOrderCountToQueue(userId: string, order: number) {
-    console.log(typeof +process.env.SOCKET_PORT);
     console.log('userId:', userId, 'order:', order);
     this.server
       // .to(userId)
