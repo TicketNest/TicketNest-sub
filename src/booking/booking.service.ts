@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common';
+import { Inject, Injectable, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { BookingEntity } from 'src/database/entity/booking.entity';
 import { Repository } from 'typeorm';
@@ -8,7 +8,7 @@ import { Redis } from 'ioredis';
 import { GoodsEntity } from 'src/database/entity/goods.entity';
 
 @Injectable()
-export class BookingService {
+export class BookingService implements OnModuleInit {
   constructor(
     @InjectRepository(BookingEntity)
     private bookingRepository: Repository<BookingEntity>,
@@ -17,6 +17,61 @@ export class BookingService {
     @Inject('REDIS_CLIENT') private redisClient: Redis,
   ) {
     this.redisClient = redisClient;
+  }
+  async onModuleInit() {
+    // Redis Stream을 처리하기 위한 로직을 여기에서 시작합니다.
+    this.processStream();
+  }
+
+  async processStream() {
+    // 1. 스트림 및 그룹 식별자 부여
+    const streamName = 'bookingStream'; // Pub에서 보내는 이름과 같게
+    const groupName = 'bookingGroup';
+    const consumer = 'consumer-1';
+
+    // 2. Consumer Group 생성
+    try {
+      await this.redisClient.xgroup(
+        'CREATE',
+        streamName,
+        groupName,
+        '$',
+        'MKSTREAM',
+      );
+    } catch (err) {
+      if (
+        !err.message.includes('BUSYGROUP Consumer Group name already exists')
+      ) {
+        console.error(err);
+      }
+    }
+
+    // 3.메세지를 계속 읽기
+    while (true) {
+      const entries = await this.redisClient.xreadgroup(
+        'GROUP', // 소비자 그룹에서 읽기 작업
+        groupName, // 소비자 그룹 이름
+        consumer, // 소비자 그룹내의 소비자 이름임.
+        'BLOCK', // 읽을 메시지가 더 이상 없으면 새 메시지가 도착 하거나 지정된 시간 초과가 발생할 때까지 호출이 차단(대기)됨
+        5000, //
+        'STREAMS',
+        streamName,
+        '>',
+      );
+
+      if (entries) {
+        console.log(entries);
+        const streamEntires = entries[0][1];
+        console.log('streamEntires:', streamEntires);
+        for (const [id, entry] of streamEntires) {
+          console.log(id, entry);
+          const booking = JSON.parse(entry[1]);
+          console.log('booking:', booking);
+          await this.createBooking(booking);
+          await this.redisClient.xack(streamName, groupName, id);
+        }
+      }
+    }
   }
 
   async createBooking(booking) {
@@ -28,7 +83,7 @@ export class BookingService {
     const cachedBookingLimit = await this.redisClient.get(
       `bookingLimitOfGoodsId:${booking.goodsId}`,
     );
-
+    console.log('bookinggg:', booking);
     let bookingCount: number;
     let bookingLimit: number;
     if (!cachedBookingCount || !cachedBookingLimit) {
