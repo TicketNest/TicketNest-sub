@@ -6,6 +6,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { BookingEntity } from 'src/database/entity/booking.entity';
 import { GoodsEntity } from 'src/database/entity/goods.entity';
 import { BullModule } from '@nestjs/bull';
+import { BookingGateway } from './booking.gateway';
 
 @Module({
   imports: [
@@ -14,6 +15,6 @@ import { BullModule } from '@nestjs/bull';
     TypeOrmModule.forFeature([BookingEntity, GoodsEntity]),
   ],
   // controllers: [BookingController],
-  providers: [BookingService, BookingProcessor], // processor는 provider로 주입해야 한다.
+  providers: [BookingService, BookingProcessor, BookingGateway], // processor는 provider로 주입해야 한다.
 })
 export class BookingModule {}
