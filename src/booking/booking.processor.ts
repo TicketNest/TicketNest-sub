@@ -13,7 +13,14 @@ export class BookingProcessor {
   async createBooking(job: Job<unknown>) {
     // Job을 변수로 사용, Queue에 Job이 등록되면 Job을 가져온다.
     const bookingData = job.data;
+
     // createBooking 메서드를 통해 예매 진행
-    const createBooking = await this.bookingService.createBooking(bookingData);
+    // console.log('bookingData:', bookingData);
+    // console.log('typeof:', typeof bookingData);
+
+    // const createBooking = await this.bookingService.createBooking(bookingData);
+    const createBooking = await this.bookingService.saveToContainer(
+      bookingData,
+    );
   }
 }

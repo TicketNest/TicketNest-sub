@@ -12,6 +12,6 @@ async function bootstrap() {
     serverUrl: configService.get<string>('APM_SERVER_URL'),
   });
 
-  await app.listen(8080);
+  await app.listen(3000);
 }
 bootstrap();
