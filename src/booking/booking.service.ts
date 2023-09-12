@@ -9,7 +9,7 @@ import { GoodsEntity } from 'src/database/entity/goods.entity';
 
 @Injectable()
 export class BookingService {
-  private container: any[] = [];
+  private container: object[] = [];
 
   constructor(
     @InjectRepository(BookingEntity)
