@@ -10,8 +10,6 @@ import { GoodsEntity } from 'src/database/entity/goods.entity';
 @Injectable()
 export class BookingService {
   private container: any[] = [];
-  private bookingLimit: number;
-  private bookingCount: number;
 
   constructor(
     @InjectRepository(BookingEntity)
@@ -25,7 +23,7 @@ export class BookingService {
   }
 
   async saveToContainer(booking) {
-    // console.log(booking);
+    const trans = apm.startTransaction('saveToContainer');
     const cachedBookingCount = await this.redisClient.get(
       `goodsId:${booking.goodsId}`,
     );
@@ -40,19 +38,20 @@ export class BookingService {
       // 컨테이너에 바로 booking 데이터 푸시
       this.container.push(booking);
     }
+    trans.end();
   }
 
   async containerToDatabase() {
+    const trans = apm.startTransaction('containerToDatabase');
     if (this.container.length > 0) {
       await this.createBooking(this.container);
       // this.bookingCount += this.container.length; //! 수정 로직
       this.container = []; // 작업을 처리하면 리스트 초기화
     }
+    trans.end();
   }
 
   async createBooking(container) {
-    // console.log('container:', container);
-
     const trans = apm.startTransaction('createBooking');
     // const cacheSpan = apm.startSpan('cacheSpan');
     const cachedBookingCount = await this.redisClient.get(
